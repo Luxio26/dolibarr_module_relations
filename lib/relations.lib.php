@@ -1,4 +1,5 @@
 <?php
+
 /* <one line to give the program's name and a brief idea of what it does.>
  * Copyright (C) 2015 ATM Consulting <support@atm-consulting.fr>
  *
@@ -17,14 +18,12 @@
  */
 
 /**
- *	\file		lib/relations.lib.php
- *	\ingroup	relations
- *	\brief		This file is an example module library
- *				Put some comments here
+ * 	\file		lib/relations.lib.php
+ * 	\ingroup	relations
+ * 	\brief		This file is an example module library
+ * 				Put some comments here
  */
-
-function relationsAdminPrepareHead()
-{
+function relationsAdminPrepareHead() {
     global $langs, $conf;
 
     $langs->load("relations@relations");
@@ -52,4 +51,51 @@ function relationsAdminPrepareHead()
     complete_head_from_modules($conf, $langs, $object, $head, $h, 'relations');
 
     return $head;
+}
+
+function getRelations($id = '') {
+    global $db;
+
+    $sql = "SELECT rowid, name";
+    $sql .= " FROM " . MAIN_DB_PREFIX . "type_relations";
+    if (!empty($id)) {
+        $sql .= " WHERE rowid=$id";
+    }
+    $resql = $db->query($sql);
+
+    $list_relations = [];
+
+    while ($obj = $db->fetch_object($resql)) {
+        if (!empty($id)) {
+            return $obj->name;
+        }
+        $list_relations[$obj->rowid] = $obj->name;
+    }
+    return $list_relations;
+}
+
+function insertRelation($socid_source, $fk_type_relation, $socid_target) {
+    global $db;
+
+    $sql = 'INSERT INTO ' . MAIN_DB_PREFIX . 'les_relations';
+    $sql .= " VALUES($socid_source, $fk_type_relation, $socid_target)";
+
+    $db->query($sql);
+}
+
+function fetchRelations($socid) {
+    global $db;
+
+    $sql = "SELECT t.name, fk_socid_target";
+    $sql .= " FROM " . MAIN_DB_PREFIX . "les_relations r";
+    $sql .= " INNER JOIN " . MAIN_DB_PREFIX . "type_relations t ON r.fk_type_relation = t.rowid";
+    $sql .= " WHERE fk_socid_source=$socid";
+    $resql = $db->query($sql);
+
+    $list_relations = [];
+
+    while ($obj = $db->fetch_object($resql)) {
+        $list_relations[] = [$obj->name, $obj->fk_socid_target];
+    }
+    return $list_relations;
 }
